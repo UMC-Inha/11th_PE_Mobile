@@ -8,19 +8,37 @@ INHA UMC 11th PE Mobile 미션, 키워드 인증 리포지토리입니다!
 .
 ├── README.md
 ├── keyword
-│   └── README.md
+│   ├── README.md
+│   ├── backend
+│   │   └── chapter00
+│   │       ├── README.md
+│   │       └── images/
+│   └── frontend
+│       └── chapter00
+│           ├── README.md
+│           └── images/
 └── mission
-    └── README.md
+    ├── README.md
+    ├── backend
+    │   └── chapter00
+    │       ├── README.md
+    │       └── images/
+    └── frontend
+        └── chapter00
+            ├── README.md
+            └── images/
 ```
 
 ### keyword 폴더
 
 키워드와 주차마다 선택적으로 있는 실습 내용을
+backend / frontend 트랙별 chapter00 형식의 디렉토리에
 정리한 파일을 올리는 폴더입니다.
 
 ### mission 폴더
 
-미션을 진행하신 내용을 정리한 파일을 올리는
+미션을 진행하신 내용을 backend / frontend 트랙별
+chapter00 형식의 디렉토리에 정리한 파일을 올리는
 폴더입니다.
 
 ## 🌳 branch 규칙
