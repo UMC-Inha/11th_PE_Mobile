@@ -4,7 +4,7 @@
 
 3주차 워크북의 Required Mission에 맞춰 MovieLog의 네 화면(홈·영화 목록·영화 상세·마이페이지)을 GoRouter로 연결했다. 실제 API·인증·Provider·MVVM은 쓰지 않고, 모든 데이터는 Mock Data와 화면 내부 상태로만 처리했다.
 
-- 실습 코드: [UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission `brownglasses/week03`](https://github.com/brownglasses/11th_PE_Mobile_Flutter_Practice_Mission/tree/brownglasses/week03/movielog)
+- 실습 코드 PR: [UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission #2](https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/2)
 
 | 시작 | 회원가입 | 홈 |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 ```text
 이름 / 닉네임: 케빈
 GitHub 저장소: https://github.com/brownglasses/11th_PE_Mobile_Flutter_Practice_Mission
-Pull Request: (실습 레포 PR 링크)
+Pull Request: https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/2
 사용한 go_router 버전: 18.0.2
 Route 목록:
   /                    시작하기
@@ -41,7 +41,7 @@ Dialog / BottomSheet / Snackbar 사용 위치:
   Dialog      - 상세 '평점 남기기' → MovieRatingDialog (MovieRatingInput 포함)
   BottomSheet - 목록 오른쪽 위 필터 아이콘 → GenreFilterSheet (DraggableScrollableSheet)
   Snackbar    - 즐겨찾기 추가/삭제, 평점 저장, 가입 완료
-전체 사용자 흐름 영상: (첨부 예정)
+전체 사용자 흐름 영상: (직접 녹화 후 첨부 예정)
 트러블슈팅: 아래 참고
 3주차 회고: 아래 참고
 ```
