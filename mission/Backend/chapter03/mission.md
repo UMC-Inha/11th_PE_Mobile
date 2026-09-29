@@ -2,189 +2,197 @@
 
 ## 미션 목표
 
-2주차에 만든 온라인 도서 대여 DB(`umc_week02_library`)에 Node.js 서버를 붙여, 도서 조회·등록과 대여 생성 API를 만들고 요청으로 검증했다. 이번 주는 DTO·ORM 없이 Raw SQL로 작성해 그 불편함을 직접 겪어 보는 것이 목표다.
+2주차 온라인 도서 대여 DB(`umc_week02_library`)에 NestJS 서버를 붙여 도서 조회·등록, 카테고리별 조회, 대여 생성·반납 API를 만들고 요청으로 검증했다. 워크북 방식대로 DTO·ORM 없이 Raw SQL과 수동 매핑으로 작성해, 4주차 ORM·DTO가 왜 필요한지 직접 겪어 보는 것이 목표다.
 
 | 항목 | 내용 |
 | --- | --- |
-| 스택 | Node.js 24 · Express 5.2.1 · mysql2 3.24.4(커넥션 풀) · dotenv 18.0.4 |
+| 스택 | NestJS 12(Node.js 24, TypeScript) · mysql2 3.24.4 커넥션 풀 · @nestjs/config |
+| 코드 | [11th_BE_NodeJs_Practice_Mission #6](https://github.com/UMC-Inha/11th_BE_NodeJs_Practice_Mission/pull/6) (`kevin/main` 대상) |
 | DB | 로컬 MySQL `umc_week02_library` (2주차 스키마·더미 데이터 그대로) |
-| 환경변수 | 접속 정보는 `.env`로 분리, `.gitignore` 처리. `.env.example`만 공유 |
-| 검증 도구 | curl로 요청하고 응답 본문·상태 코드를 기록(아래 실행 화면) |
+| 환경변수 | DB 접속 정보는 `.env`로 분리(`.gitignore` 처리), `.env.example`만 공유 |
+| 검증 | 요청 13개를 보내 URL·Body·상태 코드·응답 JSON을 기록(아래 실행 화면) |
 
 ## 폴더 구조
 
+워크북대로 `src/` 바로 아래에 계층별 파일을 둔다.
+
 ```text
-umc-week3-backend/
-├── .env.example
-├── package.json
-└── src/
-    ├── index.js                          # 서버 시작, 오류 처리, DB 접속 확인
-    ├── db.config.js                      # 커넥션 풀
-    ├── controllers/library.controller.js # 요청·응답
-    ├── services/library.service.js       # 규칙 판단(반납 가능 여부 등)
-    └── repositories/library.repository.js# SQL
+src/
+├── main.ts                 # 서버 시작, DB 연결 확인, 127.0.0.1에만 열기
+├── app.module.ts           # ConfigModule + DB Provider + 도서·대여 부품 등록
+├── database.provider.ts    # mysql2 커넥션 풀 (DATABASE_CONNECTION 토큰)
+├── book.controller.ts      # 웨이터: 요청·응답
+├── book.service.ts         # 셰프: 규칙
+├── book.repository.ts      # 창고지기: SQL
+├── rental.controller.ts
+├── rental.service.ts
+└── rental.repository.ts
 ```
 
 ## 실행 화면
 
-**서버 실행과 DB 연결**
+**서버 실행과 DB 커넥션 연결** — 라우트 6개 등록, `DB 커넥션 풀 연결 성공`
 
 ![서버 콘솔](images/server-console.png)
 
-**실습: GET /books, POST /books**
+**[실습] GET /books → POST /books → GET /books 재확인**
 
 ![실습 GET POST books](images/practice-books.png)
 
-**미션: GET /books/category/{categoryId}, POST /rentals**
+**[필수 미션] GET /books/category/{categoryId}, POST /rentals**
 
-![미션 결과](images/mission-category-rentals.png)
+![필수 미션](images/mission-category-rentals.png)
 
-**DTO 없음 체험 + 선택 미션 반납**
+**[선택 미션] PATCH /rentals/{rentalId}/return**
 
-![오류 체험과 반납](images/raw-sql-errors-and-return.png)
+![선택 미션](images/optional-return.png)
 
-## 실습 1 — DB 연결과 커넥션 풀
+> 캡처는 Postman 대신 요청 스크립트(Node fetch)로 보낸 요청·응답을 그대로 그린 화면이다. 이 맥에는 Postman이 없어서, 같은 요청을 Postman으로 다시 보내 캡처할 예정이다.
 
-```js
-// src/db.config.js
-import 'dotenv/config';
-import mysql from 'mysql2/promise';
+## 실습 — DB 연결 통로(Provider)와 GET·POST /books
 
-export const pool = mysql.createPool({
-  host: process.env.DB_HOST ?? 'localhost',
-  port: Number(process.env.DB_PORT ?? 3306),
-  user: process.env.DB_USER ?? 'root',
-  password: process.env.DB_PASSWORD ?? '',
-  database: process.env.DB_NAME ?? 'umc_week02_library',
-  connectionLimit: 10,
-  waitForConnections: true,
-  dateStrings: true,
-});
+`database.provider.ts`와 `app.module.ts`는 워크북 코드 그대로다. 이 레포는 ESM(`"type": "module"`)이라 상대 경로 import에 `.js`를 붙였다.
+
+```ts
+// src/book.repository.ts
+@Injectable()
+export class BookRepository {
+  constructor(@Inject(DATABASE_CONNECTION) private readonly pool: Pool) {}
+
+  async findAll(): Promise<any> {
+    const [rows] = await this.pool.query('SELECT * FROM book');
+    return rows;
+  }
+
+  async create(body: Record<string, any>): Promise<any> {
+    const sql =
+      'INSERT INTO book (category_id, title, description, is_available) VALUES (?, ?, ?, true)';
+    // description은 NULL 허용 컬럼이라 안 보냈으면 null로 넘긴다(트러블슈팅 No.1)
+    const [result] = await this.pool.execute(sql, [body.categoryId, body.title, body.description ?? null]);
+    return result;
+  }
+}
 ```
 
-```js
-// src/index.js (일부) — 서버를 띄우기 전에 연결을 하나 빌려 확인하고 반납
-const conn = await pool.getConnection();
-console.log('DB 커넥션 풀 연결 성공:', conn.config.database);
-conn.release();
-
-// 인증이 없는 실습용 API라 127.0.0.1에만 연다
-app.listen(port, '127.0.0.1');
-```
-
-## 실습 2 — GET /books, POST /books
-
-3계층으로 나눴다. Repository(SQL) → Service(규칙) → Controller(요청·응답) 순서로 작성했다.
-
-```js
-// repository
-export async function findAllBooks() {
-  const [rows] = await pool.query('SELECT * FROM book ORDER BY book_id');
-  return rows;
-}
-export async function insertBook({ categoryId, title, description }) {
-  const [result] = await pool.query(
-    'INSERT INTO book (category_id, title, description, is_available) VALUES (?, ?, ?, TRUE)',
-    [categoryId, title, description ?? null],
-  );
-  return result.insertId;
+```ts
+// src/book.service.ts
+async createBook(body: Record<string, any>): Promise<string> {
+  await this.bookRepository.create(body);
+  return '도서 등록이 완료되었습니다!';
 }
 
-// controller
-router.get('/books', async (req, res) => res.json(await service.getAllBooks()));
-router.post('/books', async (req, res) => {
-  const result = await service.createBook(req.body);
-  res.status(201).json({ message: '도서 등록이 완료되었습니다!', ...result });
-});
+// src/book.controller.ts
+@Controller('books')
+export class BookController {
+  @Get()
+  async getBooks(): Promise<any> { return await this.bookService.getAllBooks(); }
+
+  @Post()
+  async createBook(@Body() body: Record<string, any>): Promise<string> {
+    return await this.bookService.createBook(body);
+  }
+}
 ```
 
 | 요청 | 결과 |
 | --- | --- |
 | `GET /books` | 200, 3권 |
-| `POST /books` `{"categoryId":1,"title":"클린 코드","description":"애자일 소프트웨어 장인 정신"}` | 201, `bookId: 4` |
-| `GET /books` 재확인 | 200, 4권 — 맨 끝에 `클린 코드` 추가 확인 |
+| `POST /books` `{"categoryId":1,"title":"클린 코드","description":"애자일 소프트웨어 장인 정신"}` | 201, `도서 등록이 완료되었습니다!` |
+| `GET /books` 재확인 | 200, 4권 — 맨 끝에 `클린 코드`(book_id 4) |
 
-`?` 자리표시자로 값을 넘겨 SQL Injection을 막았다. 문자열을 `+`로 이어 붙이지 않았다.
+값은 전부 `?` 자리에 넘겨 SQL Injection을 막았다. 문자열을 `+`로 이어 붙이지 않았다.
 
-## 미션 1 (필수) — GET /books/category/{categoryId}
+## 필수 미션 1 — GET /books/category/{categoryId}
 
-```js
+```ts
 // repository
-export async function findBooksByCategoryId(categoryId) {
-  const [rows] = await pool.query(
-    'SELECT * FROM book WHERE category_id = ? ORDER BY book_id',
-    [categoryId],
-  );
+async findByCategoryId(categoryId: number): Promise<any> {
+  const [rows] = await this.pool.execute('SELECT * FROM book WHERE category_id = ?', [categoryId]);
   return rows;
 }
 
-// controller — Path Parameter를 숫자로 바꿔 넘긴다
-router.get('/books/category/:categoryId', async (req, res) => {
-  res.json(await service.getBooksByCategory(Number(req.params.categoryId)));
-});
+// controller — Path Variable을 숫자로 받는다(Spring의 @PathVariable Long과 같은 역할)
+@Get('category/:categoryId')
+async getBooksByCategory(@Param('categoryId', ParseIntPipe) categoryId: number): Promise<any> {
+  return await this.bookService.getBooksByCategory(categoryId);
+}
 ```
 
 | 요청 | 결과 |
 | --- | --- |
 | `GET /books/category/1` (문학) | 200, 3권 (달빛 도서관 · 겨울의 편지 · 클린 코드) |
 | `GET /books/category/999` | 200, `[]` — 없는 카테고리는 빈 배열 |
+| `GET /books/category/abc` | 400 — `ParseIntPipe`가 숫자가 아닌 값을 거름 |
 
-## 미션 2 (필수) — POST /rentals
+## 필수 미션 2 — POST /rentals
 
-```js
-// repository — 대여일은 지금, 반납 예정일은 7일 뒤. returned_at은 NULL 허용이라 생략
-export async function insertRental({ userId, bookId }) {
-  const [result] = await pool.query(
-    `INSERT INTO rental (user_id, book_id, rented_at, due_at)
-     VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))`,
-    [userId, bookId],
-  );
-  return result.insertId;
+```ts
+// repository — rental_id는 AUTO_INCREMENT, returned_at은 NULL 허용이라 생략
+async create(body: Record<string, any>): Promise<any> {
+  const sql =
+    'INSERT INTO rental (user_id, book_id, rented_at, due_at) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))';
+  const [result] = await this.pool.execute(sql, [body.userId, body.bookId]);
+  return result;
 }
 
-// controller
-router.post('/rentals', async (req, res) => {
-  const rental = await service.createRental(req.body);
-  res.status(201).json({ message: '대여 기록이 생성되었습니다!', rental });
-});
+// service — INSERT 결과에는 insertId만 있어서, 날짜 확인용으로 방금 만든 행을 다시 읽는다
+async createRental(body: Record<string, any>): Promise<any> {
+  const result = await this.rentalRepository.create(body);
+  const [rental] = await this.rentalRepository.findById(result.insertId);
+  return rental;
+}
 ```
 
-- 요청 `{"userId":1,"bookId":2}` → **201**, `rental_id: 3`
-- `rented_at 2026-09-29 20:35:09`, `due_at 2026-10-06 20:35:09`(정확히 7일 뒤), `returned_at null`
+- 요청 `{"userId":2,"bookId":3}` → **201**, `rental_id: 4`
+- DB 값: `rented_at 2026-09-29 22:20:00`, `due_at 2026-10-06 22:20:00` — 정확히 7일 뒤, `returned_at NULL`
 
 ## 선택 미션 — PATCH /rentals/{rentalId}/return
 
-```js
-// repository — 이미 반납한 기록은 건드리지 않는다
+```ts
+// repository — 워크북 쿼리에 조건 하나를 더했다(트러블슈팅 No.2)
 'UPDATE rental SET returned_at = NOW() WHERE rental_id = ? AND returned_at IS NULL'
 
-// service — 바뀐 행이 0개면 반납할 수 없는 기록
-if (changed === 0) throw new HttpError(404, `반납할 수 있는 대여 기록이 없습니다. rentalId=${rentalId}`);
+// service — 바뀐 행이 0개면 없는 번호이거나 이미 반납한 기록
+if (result.affectedRows === 0) {
+  throw new NotFoundException(`반납할 수 있는 대여 기록이 없습니다. (rentalId: ${rentalId}, 없는 번호이거나 이미 반납됨)`);
+}
 ```
 
 | 요청 | 결과 |
 | --- | --- |
-| `PATCH /rentals/3/return` | 200, `returned_at` 기록 |
+| `PATCH /rentals/4/return` | 200, `returned_at` 기록 |
 | 같은 요청 다시 | **404** — 반납일이 덮어써지지 않음 |
+| `PATCH /rentals/999/return` | **404** |
 
-## Raw SQL과 DTO 없음의 문제 체험
+## 생 SQL & No DTO의 대환장 파티 — 직접 겪은 것
 
-| 실험 | 요청 | 결과 |
+![생 SQL 체험](images/raw-sql-experiments.png)
+
+| 실험 | 결과 | 느낀 점 |
 | --- | --- | --- |
-| Key 오타 | `{"categoryId":1,"titel":"해리포터"}` | 실행 전엔 아무 오류 없음. `title`이 비어 **500** `Column 'title' cannot be null` |
-| 없는 FK | `{"categoryId":999,"title":"유령 도서"}` | **500** `foreign key constraint fails` |
-| 스키마 결합 | `GET /books` | `book_id`, `is_available: 1`처럼 DB 컬럼명·타입이 그대로 앱에 노출 |
-| 규칙 없음 | `POST /rentals` bookId 2 | 이미 대여 중(`is_available = 0`)인 책도 대여가 만들어짐 |
+| `"titel"` 오타로 등록 | **500** `Bind parameters must not contain undefined` | 코드 작성 단계에서는 빨간 줄 하나 없다. 요청을 보내 봐야 안다 |
+| 없는 `categoryId: 999` | **500** `ER_NO_REFERENCED_ROW_2` (FK 위반) | 사용자 실수인데 서버 에러(500)로 나간다. 400으로 알려야 한다 |
+| `GET /books` 응답 모양 | `book_id`, `is_available: 1` | DB 컬럼명(snake_case)과 `TINYINT` 값이 그대로 앱에 노출된다 |
+| 대여 응답의 날짜 | `2026-09-29T13:20:00.000Z` | DB에는 한국 시간 22:20인데 응답은 UTC로 바뀌어 나간다. 변환 규칙을 한곳에서 정하지 않으면 화면마다 시간이 달라진다 |
+| 대여 중인 책 규칙 | 검사 없음 | 대여를 만들어도 `is_available`이 그대로다. 대여 가능 여부 확인과 상태 변경은 Service 규칙 + 트랜잭션으로 묶어야 한다(4주차) |
 
-→ 사용자 실수는 500이 아니라 400으로 알려야 하고, 응답 모양은 DB와 떼어 놓아야 한다. 4주차 DTO·ORM이 필요한 이유다. 대여 가능 여부 확인과 `is_available` 변경은 트랜잭션으로 묶는 것이 다음 과제다.
+## 트러블 슈팅
 
-## 트러블슈팅
+![수정 전후](images/troubleshooting.png)
 
-```text
-증상: 없는 rentalId나 이미 반납한 기록에 PATCH해도 200이 나올 수 있음
-원인: UPDATE는 조건에 맞는 행이 없어도 오류 없이 끝남(affectedRows = 0)
-수정: Service에서 affectedRows가 0이면 404를 던지도록 판단
-```
+**⚡ 이슈 No.1**
+
+- 이슈: 👉 `description` 없이 `POST /books`를 보내면 500 Internal Server Error가 났다. 서버 콘솔에는 `TypeError: Bind parameters must not contain undefined. To pass SQL NULL specify JS null`
+- 문제: 👉 `pool.execute()`는 prepared statement라 바인딩 값에 `undefined`가 있으면 쿼리를 보내기 전에 막는다. Body에 없는 키를 꺼내면 `undefined`가 된다. `description`은 DB에서 NULL을 허용하는 컬럼인데도 요청 단계에서 막혔다
+- 해결: 👉 NULL 허용 컬럼만 `body.description ?? null`로 넘겼다. 필수 컬럼 `title`은 그대로 두어, 빠지면 에러가 나게 했다(4주차 DTO 검증으로 400 처리 예정)
+- 참고레퍼런스: [mysql2 문서 - Prepared Statements](https://sidorares.github.io/node-mysql2/docs/documentation/prepared-statements)
+
+**⚡ 이슈 No.2**
+
+- 이슈: 👉 이미 반납한 대여에 `PATCH /rentals/3/return`을 한 번 더 보내니 200이 나오고 `returned_at`이 13:18:36 → 13:18:58(UTC)로 바뀌었다. 없는 번호(`/rentals/999/return`)도 200에 빈 응답이었다
+- 문제: 👉 `UPDATE rental SET returned_at = NOW() WHERE rental_id = ?`는 이미 반납한 행도 다시 바꾼다. 그리고 `UPDATE`는 바꿀 행이 없어도 에러 없이 끝난다(`affectedRows = 0`)
+- 해결: 👉 조건에 `AND returned_at IS NULL`을 붙여 아직 반납하지 않은 기록만 바꾸고, Service에서 `affectedRows === 0`이면 `NotFoundException`(404)을 던졌다
+- 참고레퍼런스: [MySQL 8.4 - UPDATE Statement](https://dev.mysql.com/doc/refman/8.4/en/update.html), [NestJS - Built-in HTTP exceptions](https://docs.nestjs.com/exception-filters#built-in-http-exceptions)
 
 ## 체크리스트
 
@@ -192,20 +200,19 @@ if (changed === 0) throw new HttpError(404, `반납할 수 있는 대여 기록�
 
 - [x] 로컬 MySQL에 book, category, users, rental 테이블이 정상 생성되어 있다
 - [x] 서버 콘솔에 에러 없이 DB 커넥션이 연결된다
-- [x] GET /books 요청 시 도서 목록이 JSON 배열로 응답된다
-- [x] POST /books 요청 시 새로운 데이터가 DB에 삽입된다
+- [x] GET /books 요청 시 도서 목록이 JSON 배열로 잘 응답된다
+- [x] POST /books 요청 시 새로운 데이터가 DB에 정상 삽입된다
 
 **미션**
 
-- [x] (필수) GET /books/category/{categoryId}
+- [x] (필수) GET /books/category/{categoryId} — `WHERE category_id = ?`
 - [x] (필수) POST /rentals — `NOW()`, `DATE_ADD(NOW(), INTERVAL 7 DAY)`
-- [x] (선택) PATCH /rentals/{rentalId}/return — 중복 반납 404
+- [x] (선택) PATCH /rentals/{rentalId}/return — 중복 반납·없는 번호 404
 
 ## 실행 방법
 
 ```bash
-cd umc-week3-backend
-cp .env.example .env   # 비밀번호가 있다면 DB_PASSWORD 입력
-npm install
-npm start              # http://127.0.0.1:3000
+cp .env.example .env   # DB_PASSWORD 등 로컬 MySQL 정보 입력
+npm ci
+npm run start:dev      # http://localhost:3000
 ```
