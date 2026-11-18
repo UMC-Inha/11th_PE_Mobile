@@ -2,7 +2,7 @@
 
 - 이름 / 닉네임: 케빈
 - [GitHub 실습 저장소](https://github.com/brownglasses/11th_PE_Mobile_Flutter_Practice_Mission/tree/brownglasses/week08)
-- Pull Request: FE_PR_LINK_PLACEHOLDER
+- Pull Request: [Pull Request #20](https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/20)
 - [원본 워크북](https://makeus-challenge.notion.site/41cb57f4596b80b1bc6cd94bb9878937)
 - [핵심 개념 정리](../../../keyword/Frontend/chapter08/keyword.md)
 - 같은 주 백엔드 미션: [백엔드 8주차](../../Backend/chapter08/mission.md)
@@ -142,7 +142,7 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| PR 링크 | FE_PR_LINK_PLACEHOLDER |
+| PR 링크 | [Pull Request #20](https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/20) |
 | 로그인→GET me 증거 | 로그인 성공 [05](images/05_login_success_home.jpg) → 마이페이지 [06](images/06_my_page_nickname_email_join_date.jpg). 요청 기록: `POST /auth/login` 200(Authorization 없음) → `GET /members/me` 200(Bearer 있음). 틀린 비밀번호는 [03](images/03_login_wrong_password_form_error_only.jpg)(401 AUTH401_1, 폼 오류만), 통신 실패는 [04](images/04_login_network_failure_different_message.jpg) |
 | 재시작 복원 / 로그아웃 / 만료 증거 | **복원**: 새로고침 → 시작 화면 [07](images/07_reload_restore_splash_while_GET_me_pending.jpg) → 홈 [09](images/09_restore_after_retry_home.jpg), 요청 순서 `GET /members/me` → `GET /movie/popular`, 로그인 화면은 한 번도 안 보임. **복원 실패(통신)**: [08](images/08_restore_timeout_retryRequired_token_kept.jpg)·[30](images/30_BE_down_reload_retryRequired_token_kept.jpg) 토큰 유지. **로그아웃**: [23](images/23_logout_login_screen_no_expiry_snackbar.jpg) 토큰 키 삭제, 만료 안내 없음. **무효/만료**: [31](images/31_invalid_token_restore_login_with_expiry_snackbar.jpg)(AUTH401_3)·[32](images/32_expired_token_protected_request_login_with_snackbar.jpg)(AUTH401_4), 안내 한 번 |
 | 닉네임 수정 증거 | 정상 [22](images/22_profile_saved_screen_closed_new_nickname.jpg)(`PATCH /members/me` 200), 중복 409 [18](images/18_profile_409_duplicate_nickname_input_kept.jpg)(입력 유지), 같은 닉네임 [17](images/17_profile_same_nickname_no_request_snackbar.jpg)(요청 없음), 2~12자 [19](images/19_profile_validation_2to12_no_request.jpg), 통신 실패 [21](images/21_profile_network_failure_snackbar_covers_save_button.jpg)(로그아웃 안 함) |
