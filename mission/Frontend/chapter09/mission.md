@@ -2,7 +2,7 @@
 
 - 이름 / 닉네임: 케빈
 - [GitHub 실습 저장소](https://github.com/brownglasses/11th_PE_Mobile_Flutter_Practice_Mission/tree/brownglasses/week09)
-- Pull Request: {{FE_PR}}
+- Pull Request: [Pull Request #22](https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/22)
 - [원본 워크북](https://makeus-challenge.notion.site/e41b57f4596b83d4ba54810816d0694e)
 - [핵심 개념 정리](../../../keyword/Frontend/chapter09/keyword.md)
 - 같은 주 백엔드 미션: [백엔드 9주차](../../Backend/chapter09/mission.md)
@@ -178,7 +178,7 @@
 ## 제출 양식
 
 ```
-PR 링크: {{FE_PR}}
+PR 링크: https://github.com/UMC-Inha/11th_PE_Mobile_Flutter_Practice_Mission/pull/22
 영화 상세 즐겨찾기 등록·해제 영상: 영상은 없다. 정지 화면 ①②③(images/01~03)과 요청 기록(DELETE 200 → POST 201)
 마이페이지 → 내 즐겨찾기 → 상세 해제 → 뒤로가기 갱신 영상: 영상은 없다. 정지 화면 ⑦(images/39, 40)과 요청 기록(DELETE 200 → GET /favorites)
 내 즐겨찾기 빈 목록·조회 오류·영화 정보 일부 실패 화면: ⑦(빈 목록), ⑧(조회 오류), ⑤⑥(한 건 실패·재조회)

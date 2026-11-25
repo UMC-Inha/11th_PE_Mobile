@@ -3,7 +3,7 @@
 - 이름 / 닉네임: 케빈
 - 선택 스택: NestJS 12 + TypeORM + MySQL + `@nestjs/jwt` + `@nestjs/swagger` + vitest (Spring Boot 대신 NestJS 한 스택으로 진행. 워크북의 Jest 대신 이 프로젝트가 쓰는 vitest로 테스트했다)
 - [GitHub 실습 저장소 (`movie/` 폴더)](https://github.com/brownglasses/11th_BE_NodeJs_Practice_Mission/tree/brownglasses/week09/movie)
-- Pull Request: {{BE_PR}}
+- Pull Request: [Pull Request #29](https://github.com/UMC-Inha/11th_BE_NodeJs_Practice_Mission/pull/29)
 - [원본 워크북](https://makeus-challenge.notion.site/be6b57f4596b833db3d481fae8bc4e51)
 - [핵심 키워드](../../../keyword/Backend/chapter09/keyword.md)
 - 같은 주 프론트엔드 미션: [프론트 9주차](../../Frontend/chapter09/mission.md)
